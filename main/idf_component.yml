@@ -1,0 +1,4 @@
+## IDF Component Manager Manifest
+## MIPI DSI 驱动自 ESP-IDF v5.3 起已内置于 esp_lcd 组件，无需额外依赖。
+dependencies:
+  idf: ">=5.4"
