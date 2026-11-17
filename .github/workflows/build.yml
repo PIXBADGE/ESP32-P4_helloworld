@@ -1,0 +1,38 @@
+name: Build AKS8 Firmware
+
+on:
+  push:
+    branches: [ main, master ]
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Build & merge firmware (ESP32-P4)
+        uses: espressif/esp-idf-ci-action@v1
+        with:
+          esp_idf_version: v5.4.2
+          target: esp32p4
+          path: '.'
+          command: |
+            idf.py fullclean
+            idf.py build
+            cd build
+            esptool.py --chip esp32p4 merge_bin -o aks8_hello_world_merged.bin @flash_args
+            ls -lh aks8_hello_world_merged.bin
+
+      - name: Upload firmware artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: AKS8_Firmware
+          if-no-files-found: error
+          path: |
+            build/aks8_hello_world_merged.bin
+            build/*.bin
+            build/bootloader/*.bin
+            build/partition_table/*.bin
+            build/flash_args
