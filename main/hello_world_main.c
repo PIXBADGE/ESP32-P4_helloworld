@@ -21,6 +21,7 @@
 #include "esp_system.h"
 #include "esp_log.h"
 #include "esp_lcd_panel_ops.h"
+#include "driver/gpio.h"
 
 #include "st7801n.h"
 #include "touch.h"
@@ -30,6 +31,34 @@ static const char *TAG = "aks8_hello";
 
 static esp_lcd_panel_handle_t s_panel = NULL;
 static esp_lcd_panel_io_handle_t s_lcd_io = NULL;
+
+/* --------------------------------------------------------------------------
+ *  earliest possible board power-up
+ *
+ *  AKS8 schematic confirms LCD_POW_EN is GPIO49 and LOW enables LCD_3V3.
+ *  Do this before any chip/flash/heap logging so that a running app always
+ *  powers the panel, even if a later LCD initialization step fails.
+ * -------------------------------------------------------------------------- */
+static void board_lcd_power_on_first(void)
+{
+    gpio_config_t io_conf = {
+        .pin_bit_mask = 1ULL << AKS8_PIN_LCD_POW_EN,
+        .mode = GPIO_MODE_OUTPUT,
+        .pull_up_en = GPIO_PULLUP_DISABLE,
+        .pull_down_en = GPIO_PULLDOWN_DISABLE,
+        .intr_type = GPIO_INTR_DISABLE,
+    };
+    ESP_ERROR_CHECK(gpio_config(&io_conf));
+
+    /* 输出高电平保持 2ms，再拉低，产生一个明确的使能沿 */
+    gpio_set_level(AKS8_PIN_LCD_POW_EN, 1);
+    vTaskDelay(pdMS_TO_TICKS(2));
+    gpio_set_level(AKS8_PIN_LCD_POW_EN, 0);
+    vTaskDelay(pdMS_TO_TICKS(20));
+
+    ESP_LOGI(TAG, "Early LCD power ON: GPIO%d = 0 (LCD_3V3 enabled)",
+             AKS8_PIN_LCD_POW_EN);
+}
 
 /* --------------------------------------------------------------------------
  * 显示演示：先彩条，再 Hello World 文本
@@ -83,6 +112,9 @@ static void touch_task(void *arg)
 
 void app_main(void)
 {
+    /* 1) 第一件事：打开屏幕电源（GPIO49 低电平） */
+    board_lcd_power_on_first();
+
     printf("Hello world!\n");
 
     /* ---------- 以下为微雪 HelloWorld 原示例内容：打印芯片信息 ---------- */
