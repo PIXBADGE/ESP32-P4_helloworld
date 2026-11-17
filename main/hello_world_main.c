@@ -138,7 +138,7 @@ void app_main(void)
     fflush(stdout);
     esp_restart();
 #else
-    ESP_LOGI(TAG, "Demo running. (Auto-restart disabled; set AKS8_AUTO_RESTART=1 to enable)")
+    ESP_LOGI(TAG, "Demo running. (Auto-restart disabled; set AKS8_AUTO_RESTART=1 to enable)");
     while (1) {
         vTaskDelay(pdMS_TO_TICKS(1000));
     }

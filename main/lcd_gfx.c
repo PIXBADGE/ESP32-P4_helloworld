@@ -114,7 +114,6 @@ void gfx_fill_rect(esp_lcd_panel_handle_t panel, int x, int y, int w, int h, uin
     for (int i = 0; i < 256; i++) {
         line[i] = color;
     }
-    int x_end = x + w;
     int y_end = y + h;
     for (int row = y; row < y_end; row++) {
         int remain = w;
